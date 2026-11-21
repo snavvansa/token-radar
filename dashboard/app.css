@@ -7,7 +7,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 var(--sans); }
 body { min-width: 1180px; }
-h1 { font-size: 20px; margin: 0; }
+h1 { font-size: 24px; margin: 0; letter-spacing: -.035em; }
 h2 { font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
 .top { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; border-bottom: 1px solid var(--line); }
 .brand { display: flex; gap: 12px; align-items: center; }
@@ -17,21 +17,34 @@ h2 { font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing
 .proof.bad { background: rgba(255,122,107,.12); color: var(--coral); border-color: var(--coral); }
 .wrap { padding: 16px 24px; display: grid; gap: 12px; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
-.kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
-.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
-.kpi .k { color: var(--dim); font-size: 11px; }
-.kpi b { display: block; font: 600 20px var(--mono); color: var(--green); margin: 2px 0; }
-.kpi .s { color: var(--faint); font-size: 11px; }
-.ledger .bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; margin: 4px 0 8px; }
-.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--dim); }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.opening { display: grid; grid-template-columns: minmax(300px, .85fr) minmax(720px, 2fr); gap: 12px; }
+.intro { padding: 18px 22px; border: 1px solid #275c61; border-radius: 10px; background: linear-gradient(120deg, #123237, #101b31 78%); }
+.eyebrow { color: var(--green); font: 700 10px var(--mono); letter-spacing: .12em; margin-bottom: 7px; }
+.intro p { color: #b0c4d4; margin: 6px 0 10px; max-width: 52ch; }
+.equation { font: 11px/1.5 var(--mono); color: #c0e6d9; }
+.hero-tiles { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+.hero-tile { border-radius: 10px; border: 1px solid var(--line); background: var(--panel); padding: 14px 12px; display: flex; flex-direction: column; justify-content: center; }
+.hero-tile b { font: 700 30px var(--mono); color: var(--green); letter-spacing: -.06em; }
+.hero-tile span { font-weight: 650; color: var(--ink); margin: 3px 0; }
+.hero-tile small { color: var(--dim); font-size: 11px; }
+.callout { grid-column: 1/-1; border-left: 3px solid var(--green); padding: 5px 12px; background: #142632; color: #cbd8e9; font-size: 12px; }
+.callout strong { color: var(--ink); }
+.ledger { padding: 9px 16px; }
+
+.audit summary, .methods summary { color: var(--green); cursor: pointer; font: 11px var(--mono); }
+.audit { margin-top: 5px; }
+.methods { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; background: var(--panel); }
+.methods > .panel { margin-top: 10px; padding: 0; border: 0; }
+.ledger .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 2px 0 5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 10px; color: var(--dim); }
+.legend i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 3px; vertical-align: -1px; }
 .legend b { color: var(--ink); font-family: var(--mono); margin-left: 4px; }
 .checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .chk { font: 11px var(--mono); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--green2); color: var(--green); background: rgba(62,230,168,.06); }
 .chk.bad { border-color: var(--coral); color: var(--coral); background: rgba(255,122,107,.08); }
 .evidence { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: start; }
-.charts { display: grid; grid-template-columns: minmax(0,1.75fr) minmax(0,.62fr) minmax(0,.7fr); gap: 24px; margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
-.charts p.note { margin: 0 0 8px; }
+.charts { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 24px; margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+
 svg .ax { fill: #93a3bf; font: 11px var(--mono); }
 svg .al { fill: #7d8db0; font: 11px var(--sans); }
 svg .hl { fill: #c4b5fd; font: 700 13px var(--sans); paint-order: stroke; stroke: #0a101c; stroke-width: 4px; }

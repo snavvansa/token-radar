@@ -1,5 +1,4 @@
-// Token Radar page, part 2: the board (sortable, filterable, deposit-aware verdicts) and a detail view
-// per protocol (how its figure is made, its place on the fitted curve, peers, verdict grid, the plan).
+// Sort and filter the board; show each row's model arithmetic and priced farm plan.
 (function () {
   'use strict';
   var UI = window.UI, D = UI.D, SNAP = UI.SNAP, S = UI.state, el = UI.el, add = UI.add;
@@ -24,7 +23,7 @@
   }
   function uniq(a) { return a.filter(function (v, i) { return a.indexOf(v) === i; }).sort(); }
 
-  // ---- board ----
+
   var COLS = [['rank', '#'], ['name', 'Protocol'], ['tvl_usd', 'TVL'], ['change_7d', '7D'], ['age_days', 'No token for'], ['token_odds', 'Token odds'], ['launch_value_usd', 'If it launches'], ['implied_value_usd', 'Implied value · P25-P75'], ['net', 'Verdict · net'], ['per_hour', 'Net / hour'], ['breakeven', 'Break-even deposit']];
   function rows() {
     var q = S.q.toLowerCase();
@@ -45,7 +44,7 @@
     return list;
   }
   function board(app) {
-    add(app, UI.kpis(), UI.ledger(), UI.evidence());
+    add(app, UI.kpis(), UI.ledger());
     var p = el('section', 'panel board'), c = el('div', 'controls');
     var vc = { all: D.board.length, FARM: 0, THIN: 0, SKIP: 0 }; D.board.forEach(function (r) { vc[UI.econ(r).verdict]++; });
     add(c, seg([['all', 'All ' + vc.all], ['FARM', 'Farm ' + vc.FARM], ['THIN', 'Thin ' + vc.THIN], ['SKIP', 'Skip ' + vc.SKIP]], S.verdict, function (v) { S.verdict = v; }),
@@ -80,9 +79,11 @@
       t.appendChild(tb); sc.textContent = ''; sc.appendChild(t);
     }
     draw();
+    var methods = el('details', 'methods'), title = el('summary', '', 'Model audit · held-out tests, fitted curve, calibration and assumptions');
+    add(methods, title, UI.evidence()); app.appendChild(methods);
   }
 
-  // ---- detail ----
+
   function detail(app) {
     var r = D.board.filter(function (b) { return b.slug === S.sel; })[0] || D.board[0], f = FEAT[r.slug], e = UI.econ(r);
     var back = el('span', 'back', '← Board'); back.addEventListener('click', function () { S.view = 'board'; render(); });

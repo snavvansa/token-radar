@@ -1,5 +1,4 @@
-// Token Radar page, part 3: inline SVG charts. UI.scatter: traded tokens' cap vs TVL, the fitted curve,
-// the walk-forward hold-out, optionally one protocol on the curve. UI.calibration: held-out odds vs observed.
+// Inline SVG: traded peers, held-out points, fitted value and odds calibration.
 (function () {
   'use strict';
   var UI = window.UI, D = UI.D, M = D.model, NS = ['http', '//www.w3.org/2000/svg'].join(':'); // the SVG namespace id, built so no address literal sits in source
@@ -20,7 +19,7 @@
     var sx = function (v) { return x0 + (Math.log(v) - lo) / (hi - lo) * (x1 - x0); }, sy = function (v) { return y0 - (Math.log(v) - mlo) / (mhi - mlo) * (y0 - y1); };
     var svg = frame(W, H), g = s('g'); svg.appendChild(g);
     axis(g, x0, y0, x1, y1, DOLLAR.slice(0, 5).filter(function (t) { return t[0] >= 4e6; }), DOLLAR.concat([[1e11, '$100B']]), sx, sy, 'TVL (log)', 'Market cap (log)');
-    // the fitted curve at the median age, no family flag: every other term held at its middle
+    // The size curve holds age at its median and every other feature at zero.
     var ages = pts.map(function (f) { return f.y; }).sort(function (a, b) { return a - b; }), ym = ages[ages.length >> 1], path = '';
     for (var i = 0; i <= 40; i++) {
       var tv = Math.exp(lo + (hi - lo) * i / 40), f = { z: Math.log(tv / 1e8), y: ym, fam: 0, g: 0, ch: 0, cat: '' };

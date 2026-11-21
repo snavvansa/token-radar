@@ -1,4 +1,4 @@
-// Token Radar v2: token-radar-01 entry (Node 22.18+, standard library only).
+// Token Radar v4: token-radar-01 entry (Node 22.18+, standard library only).
 //
 // The model lives in dashboard/core-*.js, one script the page also runs: main.ts builds the board with
 // it and writes /output (or MAKEFUN_OUTPUT_DIR); the page builds it again from the same snapshot and
@@ -42,7 +42,7 @@ if (failed.length > 0) {
 }
 
 mkdirSync(out, { recursive: true });
-writeFileSync(join(out, 'board.json'), `${JSON.stringify({ model: 'radar-v2', as_of: snapshot.as_of, value_terms: result.model.value_terms, odds_terms: result.model.odds_terms, rows: result.board })}\n`);
+writeFileSync(join(out, 'board.json'), `${JSON.stringify({ model: 'radar-v4', as_of: snapshot.as_of, value_terms: result.model.value_terms, odds_terms: result.model.odds_terms, rows: result.board })}\n`);
 const ledger: Record<string, number> = {};
 for (const [k, v] of Object.entries(result.ledger)) ledger[k] = (v as string[]).length;
 writeFileSync(join(out, 'data.js'), `window.RADAR_SNAPSHOT=${JSON.stringify(snapshot)};\nwindow.RADAR=${JSON.stringify({ board: result.board, ledger, model: result.model, tests: result.tests })};\n`);
@@ -68,4 +68,4 @@ if (shots.length < 3 || shots.length > 4) {
   process.exit(1);
 }
 writeFileSync(join(out, 'dossier.json'), buildDossier(out, { text_max_bytes: 65_536, screenshots: { max: 4, max_bytes: 524_288 }, dashboard: { max_files: 400, max_bytes: 4_194_304 } }));
-process.stdout.write(`token radar v2: ${snapshot.protocols.length} protocols accounted, ${result.board.length} ranked; value terms [${result.model.value_terms}], odds terms [${result.model.odds_terms}]; wrote ${pageFiles.length} page files and ${shots.length} screenshots to ${out}\n`);
+process.stdout.write(`token radar v4: ${snapshot.protocols.length} protocols accounted, ${result.board.length} ranked; value terms [${result.model.value_terms}], odds terms [${result.model.odds_terms}]; wrote ${pageFiles.length} page files and ${shots.length} screenshots to ${out}\n`);

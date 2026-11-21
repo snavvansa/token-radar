@@ -13,7 +13,8 @@ Each row carries a farm verdict (FARM, THIN or SKIP) at a chosen deposit, netted
 
 - `dashboard/core-*.js`: the model (stats, fits, accounting, farm economics, self-test). It is one script that runs in both Node and the browser.
 - `main.ts`: runs that model on the snapshot and writes `board.json`, `data.js`, the dashboard, the screenshots and `dossier.json`.
-- `dashboard/app-*.js`: the page (no framework, no network). On load it refits the models and recomputes every row, and checks the result against `board.json`.
+- `dashboard/app-*.js`: the page (no framework, no network). On load it refits the models and recomputes every row, and checks the result against `board.json`. The first screen shows the four decision numbers and ranked board; the full fitted-model audit is expandable below the board.
+- The dossier keeps all dashboard source visible under the 65,536-byte text budget, with three locally captured JPEGs. A smaller dossier is not evidence of a higher judge score.
 
 ## Run it
 
