@@ -1,6 +1,5 @@
-// Token Radar page, part 2: the views. Board (sortable, filterable, deposit-aware verdicts), a detail
-// view per protocol (how its figure is made, nearest priced peers, farm verdict grid, the plan) and the
-// priced peers the launch value is fitted on.
+// Token Radar page, part 2: the board (sortable, filterable, deposit-aware verdicts) and a detail view
+// per protocol (how its figure is made, its place on the fitted curve, peers, verdict grid, the plan).
 (function () {
   'use strict';
   var UI = window.UI, D = UI.D, SNAP = UI.SNAP, S = UI.state, el = UI.el, add = UI.add;
@@ -10,6 +9,7 @@
   var CATS = []; TRADED.forEach(function (f) { if (CATS.indexOf(f.cat) < 0) CATS.push(f.cat); }); CATS.sort();
   var VD = RM.valueDesign(M.value_terms, CATS);
   function launchOf(f) { return Math.exp(ST.dot(M.value_w, VD.row(f)) + VD.offset(f)); }
+  UI.TRADED = TRADED; UI.launchOf = launchOf;
 
   function seg(opts, cur, on) {
     var s = el('div', 'seg');
@@ -107,7 +107,7 @@
     });
     lines.push(['= Value if a token launches', 'held-out miss ' + UI.x(M.value_steps.filter(function (s) { return s.kept; }).pop().a), UI.usd(launchOf(f))]);
     var ow = M.odds_w, logit = ow[0], oparts = ['intercept ' + ow[0].toFixed(2)];
-    M.odds_terms.forEach(function (t, k) { var v = t === 'age' ? f.y : t === 'size' ? f.z : t === 'growth' ? f.g : t === 'chains' ? f.ch : 0; logit += ow[k + 1] * v; oparts.push(t + ' ' + (ow[k + 1] >= 0 ? '+' : '') + (ow[k + 1] * v).toFixed(2)); });
+    M.odds_terms.forEach(function (t, k) { var v = t === 'age' ? f.y : t === 'size' ? f.z : t === 'growth' ? f.g : t === 'chains' ? f.ch : 0; logit += ow[k + 1] * v; oparts.push(t + ' ' + (ow[k + 1] * v >= 0 ? '+' : '') + (ow[k + 1] * v).toFixed(2)); });
     lines.push(['× Token odds', 'logit ' + oparts.join(', ') + ' = ' + logit.toFixed(2) + ' (base rate ' + Math.round(M.odds_base * 100) + '%)', Math.round(ST.sigmoid(logit) * 100) + '%']);
     lines.push(['= Implied value', 'the board ranks on this', UI.usd(r.implied_value_usd)]);
     var t = UI.table(['Step', 'From the snapshot', ''], lines.map(function (l) { var c = el('div'); add(c, l[0], el('small', '', l[1])); return [c, '', l[2]]; }), [0]);
@@ -115,7 +115,8 @@
     var check = launchOf(f) * ST.sigmoid(logit), okc = Math.max(1, Math.round(check)) === r.implied_value_usd;
     add(how, el('h2', '', 'How the figure is made'), t, el('div', okc ? 'note pos' : 'note neg', okc ? '✓ these factors, multiplied here, give board.json\'s ' + UI.usd(r.implied_value_usd) : '✗ the factors do not reproduce board.json'));
     var peers = TRADED.slice().sort(function (a, b) { return (Math.abs(a.z - f.z) + (a.cat === f.cat ? 0 : 0.7)) - (Math.abs(b.z - f.z) + (b.cat === f.cat ? 0 : 0.7)) || (a.slug < b.slug ? -1 : 1); }).slice(0, 6);
-    add(how, el('h2', '', 'Nearest priced peers · their tokens trade'), UI.table(['Token', 'Category', 'TVL', 'Market cap', 'Cap/TVL', 'Model'], peers.map(function (p) { return [p.p.name + (p.p.symbol ? ' · ' + p.p.symbol : ''), p.cat, UI.usd(p.p.tvl_usd), UI.usd(p.p.mcap_usd), UI.x(p.p.mcap_usd / p.p.tvl_usd), UI.usd(launchOf(p))]; }), [0, 1]));
+    add(how, el('h2', '', 'Where ' + r.name + ' sits on the fitted curve'), UI.scatter(r));
+    add(how, el('h2', '', 'Nearest priced peers · their tokens trade'), UI.table(['Token', 'Category', 'TVL', 'Market cap', 'Cap/TVL', 'Model'], peers.slice(0, 4).map(function (p) { return [p.p.name + (p.p.symbol ? ' · ' + p.p.symbol : ''), p.cat, UI.usd(p.p.tvl_usd), UI.usd(p.p.mcap_usd), UI.x(p.p.mcap_usd / p.p.tvl_usd), UI.usd(launchOf(p))]; }), [0, 1]));
 
     var farm = el('div', 'panel');
     var vt = el('div'); add(vt, el('span', 'v ' + e.verdict, e.verdict), ' ' + UI.usd(e.deposit) + ' for ' + M.farm.weeks + ' weeks: modelled drop ' + UI.usd(e.drop) + ' less ' + UI.usd(e.fees) + ' fees (' + e.txs + ' transactions) and ' + UI.usd(e.tbill) + ' a T-bill would pay = ', el('b', e.net >= 0 ? 'pos' : 'neg', UI.usd(e.net)), ' net, ' + UI.usd(e.per_hour) + ' an hour over ' + e.hours + ' h.');
@@ -125,31 +126,25 @@
     }), [0]);
     grid.className = 'grid';
     add(farm, el('h2', '', 'Farm verdict · net of every outflow'), vt, el('div', 'note', 'Drop = implied value × drop share × deposit ÷ (TVL + deposit). Break-even deposit: ' + (e.breakeven === null ? 'none (the drop per dollar is below the T-bill rate)' : UI.usd(e.breakeven)) + '.'), grid);
-    var ol = el('ol', 'steps');
-    r.farm_steps.forEach(function (s) { var m = /^(.*?) Cost: (.*?)\. Time: (.*?)\.$/.exec(s), li = el('li', '', m ? m[1] + ' ' : s); if (m) add(li, el('em', 'c', m[2]), el('em', 'h', m[3])); ol.appendChild(li); });
-    add(farm, el('h2', '', 'Farm plan · ' + r.farm_steps.length + ' steps at the board\'s ' + UI.usd(M.farm.deposit)), ol);
+    var e0 = r.farm, plan = UI.table(['#', 'Step', 'Cost', 'Time'], r.farm_steps.map(function (s, k) {
+      var m = /^(.*?) Cost: (.*?)\. Time: (.*?)\.$/.exec(s);
+      return [String(k + 1), m ? m[1] : s, m ? m[2] : '', m ? m[3] : ''];
+    }).concat([['', 'All ' + r.farm_steps.length + ' steps · ' + M.farm.weeks + ' weeks · capital comes back at exit', UI.usd(e0.fees) + ' fees', e0.hours + ' h']]), [1]);
+    plan.className = 'how plan'; plan.querySelector('tbody').lastChild.className = 'sum';
+    add(farm, el('h2', '', 'Farm plan · ' + r.farm_steps.length + ' steps at the board\'s ' + UI.usd(M.farm.deposit) + ' on ' + r.farm_chain), plan);
     add(g, how, farm); app.appendChild(g);
-  }
-
-  // ---- priced peers ----
-  function peers(app) {
-    var p = el('section', 'panel'), list = TRADED.slice().sort(function (a, b) { return b.p.mcap_usd - a.p.mcap_usd; });
-    add(p, el('h2', '', 'The ' + list.length + ' traded tokens the launch value is fitted on (never ranked)'), UI.table(['Protocol', 'Category', 'Listed', 'TVL', 'Market cap', 'Cap/TVL', 'Model', 'Miss'], list.map(function (f) {
-      var m = launchOf(f), miss = f.p.mcap_usd / m; return [f.p.name, f.cat, f.listed || 'undated', UI.usd(f.p.tvl_usd), UI.usd(f.p.mcap_usd), UI.x(f.p.mcap_usd / f.p.tvl_usd), UI.usd(m), UI.x(miss >= 1 ? miss : 1 / miss)];
-    }), [0, 1, 2]));
-    app.appendChild(p);
   }
 
   function nav(app) {
     var c = el('div', 'controls'); c.style.padding = '0';
-    add(c, seg([['board', 'Board'], ['detail', 'Detail: ' + ((D.board.filter(function (b) { return b.slug === S.sel; })[0] || D.board[0]).name)], ['peers', 'Priced peers']], S.view, function (v) { S.view = v; }));
+    add(c, seg([['board', 'Board'], ['detail', 'Detail: ' + ((D.board.filter(function (b) { return b.slug === S.sel; })[0] || D.board[0]).name)]], S.view, function (v) { S.view = v; }));
     app.appendChild(c);
   }
 
   function render() {
     var app = document.getElementById('app'); app.textContent = '';
     UI.header(); nav(app);
-    if (S.view === 'detail') detail(app); else if (S.view === 'peers') peers(app); else board(app);
+    if (S.view === 'detail') detail(app); else board(app);
     UI.writeHash();
   }
   render();

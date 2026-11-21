@@ -1,6 +1,5 @@
-// RadarBoard: turns the fitted models into the ranked board, the farm economics and the self-test.
-// main.ts runs build() to write board.json; the page runs the same build() on the same snapshot and
-// compares every row with the board it was handed. Nothing here reads a clock or a random number.
+// RadarBoard: fitted models -> ranked board, farm economics, self-test. main.ts and the page both run
+// build() on the same snapshot; no clock, no randomness.
 (function (root) {
   'use strict';
   var node = typeof module !== 'undefined' && module.exports;
@@ -95,7 +94,14 @@
         farm_chain: r.chain, farm: e, farm_steps: plan(r, e)
       };
     });
+    // Calibration of the held-out odds: 8 bins by predicted probability, each its mean and the observed rate.
+    var pk = fit.osel.final.pk, yk = fit.osel.final.yk, ix = pk.map(function (_, i) { return i; }).sort(function (a, b) { return pk[a] - pk[b] || a - b; }), calib = [];
+    for (var bi = 0; bi < 8; bi++) {
+      var part = ix.slice(Math.floor(bi * ix.length / 8), Math.floor((bi + 1) * ix.length / 8));
+      calib.push({ n: part.length, p: S.round(part.reduce(function (s, i) { return s + pk[i]; }, 0) / part.length, 4), y: S.round(part.reduce(function (s, i) { return s + yk[i]; }, 0) / part.length, 4) });
+    }
     var model = {
+      calibration: calib,
       value_terms: fit.vsel.kept, value_steps: fit.vsel.steps, value_w: fit.value.w, value_n: fit.V.length, value_test_n: fit.vsel.final.nTest, walk_cut: fit.vsel.final.cutDate,
       odds_terms: fit.osel.kept, odds_steps: fit.osel.steps, odds_w: fit.odds.w, odds_n: fit.O.length, odds_base: fit.odds.rates.base,
       quantiles: q, coverage: { iqr: inside(q.p25, q.p75), p80: inside(q.p10, q.p90) }, farm: FARM
@@ -123,6 +129,8 @@
     add('farm_steps', badSteps.length === 0, badSteps.length + ' rows with a step out of 20-600 chars');
     var badV = board.filter(function (r) { var e = r.farm; return (e.verdict === 'SKIP') !== (e.drop <= e.fees) || (e.verdict === 'FARM') !== (e.drop > e.fees && e.net > 0 && e.net / e.hours >= FARM.hourly_bar); });
     add('verdicts', badV.length === 0, badV.length + ' verdicts disagree with their own net');
+    var worst = model.calibration.reduce(function (m, b) { return Math.max(m, Math.abs(b.p - b.y)); }, 0);
+    add('odds_calibrated', worst <= 0.15, 'held-out odds vs observed, worst of 8 bins ' + Math.round(worst * 100) + ' pts');
     add('range_honest', model.coverage.iqr >= 0.3 && model.coverage.p80 >= 0.6, 'walk-forward caps inside P25-P75 ' + Math.round(model.coverage.iqr * 100) + '%, inside P10-P90 ' + Math.round(model.coverage.p80 * 100) + '%');
     return t;
   }

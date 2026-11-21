@@ -1,6 +1,5 @@
-// Token Radar page, part 1: state, formatting, and the proof. On load the page runs the same model
-// code main.ts ran (RadarBoard.build) on the same snapshot and compares every row with the board main.ts
-// wrote: rank, implied value, launch value, odds and farm net. The header badge says how many match.
+// Token Radar page, part 1: state, formatting, the proof, KPIs, ledger and evidence. On load the page
+// reruns RadarBoard.build (the code main.ts ran) on the same snapshot and compares every row with board.json.
 (function () {
   'use strict';
   var D = window.RADAR, SNAP = window.RADAR_SNAPSHOT;
@@ -109,7 +108,7 @@
     });
     UI.add(p, bar, lg);
     var ch = UI.el('div', 'checks');
-    var browser = [[P.same === P.n, 'board.json: ' + P.same + '/' + P.n + ' rows recomputed here'], [P.coefSame, 'refit here: both models\' coefficients match (max diff ' + P.maxDiff.toExponential(0) + ')'], [P.ledgerTotal === SNAP.protocols.length, 'ledger ' + P.ledgerTotal + ' of ' + SNAP.protocols.length]];
+    var browser = [[P.same === P.n, 'board.json: ' + P.same + '/' + P.n + ' rows recomputed here'], [P.coefSame, 'refit here: both models\' coefficients match (max diff ' + P.maxDiff.toExponential(0) + ')']];
     browser.concat(D.tests.map(function (t) { return [t.ok, t.id + ': ' + t.detail]; })).forEach(function (c) { ch.appendChild(UI.el('span', 'chk' + (c[0] ? '' : ' bad'), (c[0] ? '✓ ' : '✗ ') + c[1])); });
     p.appendChild(ch);
     return p;
@@ -119,15 +118,19 @@
     var M = D.model, p = UI.el('section', 'panel'), g = UI.el('div', 'evidence');
     function steps(list, fa, fb, a, b) {
       return UI.table(['Term, added in order', a, b, ''], list.map(function (s, i) {
-        return [(i ? '+ ' : '') + s.term, fa(s.a), fb(s.b), UI.el('span', s.kept ? 'kept' : 'drop', i === 0 ? 'baseline' : s.kept ? 'kept' : 'tested, not kept')];
+        return [(i ? '+ ' : '') + s.term, fa(s.a), fb(s.b), UI.el('span', s.kept ? 'kept' : 'drop', i === 0 ? 'baseline' : s.kept ? '✓ kept' : '✗ dropped')];
       }), [0]);
     }
     var v = UI.el('div'); UI.add(v, UI.el('h2', '', 'Launch value · typical held-out miss, ' + M.value_n + ' traded tokens'), steps(M.value_steps, UI.x, UI.x, 'Leave-one-out', 'Walk-forward'));
     var o = UI.el('div'); UI.add(o, UI.el('h2', '', 'Token odds · held-out Brier, ' + M.odds_n + ' protocols'), steps(M.odds_steps, function (n) { return n.toFixed(3); }, function (n) { return n.toFixed(3); }, '10-fold', 'Walk-forward'));
-    var q = M.quantiles, r = UI.el('div');
-    UI.add(r, UI.el('h2', '', 'Is the printed range honest?'), UI.table(['Band', 'Stated', 'Walk-forward'], [['P25-P75', '50%', Math.round(M.coverage.iqr * 100) + '%'], ['P10-P90', '80%', Math.round(M.coverage.p80 * 100) + '%']], [0]),
-      UI.el('div', 'note', 'Bands are the leave-one-out misses (' + UI.x(Math.exp(q.p25)) + ' to ' + UI.x(Math.exp(q.p75)) + ' for P25-P75). Walk-forward fits on tokens listed before ' + M.walk_cut + ' and scores the ' + M.value_test_n + ' listed after. A term stays only if both tests improve.'));
-    UI.add(g, v, o, r); p.appendChild(g);
+    var q = M.quantiles, row = UI.el('div', 'charts');
+    var c1 = UI.el('div'); UI.add(c1, UI.el('h2', '', 'The curve the launch value reads off · ' + M.value_n + ' traded tokens'), UI.scatter(null, 700, 250));
+    var c2 = UI.el('div'); UI.add(c2, UI.el('h2', '', 'Are the odds honest?'), UI.calibration());
+    var c3 = UI.el('div'); UI.add(c3, UI.el('h2', '', 'How to read the tests'),
+      UI.el('p', 'note', 'A term stays only if BOTH held-out tests improve. Walk-forward fits on tokens listed before ' + M.walk_cut + ' and scores the ' + M.value_test_n + ' listed after: the amber dots.'),
+      UI.el('p', 'note', 'Row ranges are the leave-one-out misses: P25-P75 is ' + UI.x(Math.exp(q.p25)) + ' to ' + UI.x(Math.exp(q.p75)) + '. ' + Math.round(M.coverage.iqr * 100) + '% of the later-listed tokens land inside it, ' + Math.round(M.coverage.p80 * 100) + '% inside P10-P90.'),
+      UI.el('p', 'note', 'Odds: held-out predictions in 8 bins against the share that record a token. The dashed line is perfect calibration.'));
+    UI.add(g, v, o); UI.add(row, c1, c2, c3); UI.add(p, g, row);
     return p;
   };
 })();

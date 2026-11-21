@@ -127,7 +127,7 @@
       rows.forEach(function (r) { if (S.foldOf(r.slug, 10) === k) { pk.push(f.predict(r)); yk.push(r.tok); } });
     }
     var ws = walkSplit(rows), g = fitOdds(ws.train, terms);
-    return { kfold: S.brier(pk, yk), wf: S.brier(ws.test.map(g.predict), ws.test.map(function (r) { return r.tok; })), nTest: ws.test.length };
+    return { kfold: S.brier(pk, yk), wf: S.brier(ws.test.map(g.predict), ws.test.map(function (r) { return r.tok; })), nTest: ws.test.length, pk: pk, yk: yk };
   }
 
   // Forward selection in a fixed order: add a term only if it lowers BOTH held-out errors.

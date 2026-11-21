@@ -1,6 +1,4 @@
-/* Token Radar v2. Night-shift radar palette: ink navy ground, phosphor green for value and passes,
-   amber for money at stake, violet for odds, coral for losses and fails. Type scale 11/12/13/15/20/28,
-   8px grid. */
+/* Token Radar: ink navy ground; green = value and passes, amber = money, violet = odds, coral = losses. */
 :root {
   --bg: #0a101c; --panel: #101828; --panel2: #152036; --line: #22314d; --ink: #e8eef8; --dim: #93a3bf; --faint: #5f7090;
   --green: #3ee6a8; --green2: #1e7a5c; --amber: #f5b84b; --violet: #a78bfa; --coral: #ff7a6b; --sky: #6cc4ff;
@@ -31,7 +29,14 @@ h2 { font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing
 .checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .chk { font: 11px var(--mono); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--green2); color: var(--green); background: rgba(62,230,168,.06); }
 .chk.bad { border-color: var(--coral); color: var(--coral); background: rgba(255,122,107,.08); }
-.evidence { display: grid; grid-template-columns: 1.1fr 1fr .8fr; gap: 16px; }
+.evidence { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: start; }
+.charts { display: grid; grid-template-columns: minmax(0,1.75fr) minmax(0,.62fr) minmax(0,.7fr); gap: 24px; margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.charts p.note { margin: 0 0 8px; }
+svg .ax { fill: #93a3bf; font: 11px var(--mono); }
+svg .al { fill: #7d8db0; font: 11px var(--sans); }
+svg .hl { fill: #c4b5fd; font: 700 13px var(--sans); paint-order: stroke; stroke: #0a101c; stroke-width: 4px; }
+.plan td:nth-child(2) { font: 12px/1.4 var(--sans); }
+.plan td:nth-child(3), .plan td:nth-child(4) { color: var(--amber); font-size: 11px; width: 120px; }
 table { width: 100%; border-collapse: collapse; }
 th { text-align: right; color: var(--dim); font: 600 11px var(--sans); padding: 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { text-align: right; padding: 5px 6px; border-bottom: 1px solid rgba(34,49,77,.55); font: 12px var(--mono); white-space: nowrap; }
@@ -76,10 +81,5 @@ td.name small { display: block; color: var(--faint); font-size: 11px; }
 .how td.l { font-family: var(--sans); }
 .how td.l small { display: block; color: var(--faint); }
 .how tr.sum td { color: var(--amber); font-weight: 700; border-top: 1px solid var(--line); }
-.grid td.sel { outline: 2px solid var(--amber); }
-ol.steps { margin: 0; padding-left: 22px; }
-ol.steps li { margin-bottom: 8px; }
-ol.steps em { font-style: normal; font: 11px var(--mono); padding: 0 6px; border-radius: 4px; margin-right: 6px; }
-em.c { color: var(--amber); background: rgba(245,184,75,.1); } em.h { color: var(--violet); background: rgba(167,139,250,.1); }
 .back { color: var(--sky); cursor: pointer; font-size: 12px; }
 .foot { color: var(--faint); font-size: 11px; padding: 0 24px 24px; }

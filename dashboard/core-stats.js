@@ -1,6 +1,5 @@
-// RadarStats: the math the radar's model runs on, shared by main.ts (Node) and the page (browser).
-// Ridge least squares, ridge logistic regression by Newton's method, and the held-out scores. No
-// randomness and fixed iteration counts, so Node and the browser compute the same figures.
+// RadarStats: ridge least squares, ridge logistic (Newton), held-out scores. Shared by Node and the
+// browser; fixed iterations, no randomness.
 (function (root) {
   'use strict';
 
