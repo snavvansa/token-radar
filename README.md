@@ -4,11 +4,16 @@
 [![rank](https://make.fun/badge/token-radar-01/snavvansa/token-radar/rank.svg)](https://make.fun/bounty/token-radar-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
 [![reward](https://make.fun/badge/token-radar-01/snavvansa/token-radar/reward.svg)](https://make.fun/bounty/token-radar-01?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
 
-A token launch radar that ranks every pre-token DeFi protocol in a sealed DefiLlama snapshot by a peer-implied value: TVL times the market-cap-to-TVL multiple the snapshot's own traded tokens of the same category carry, adjusted for seven-day growth and how long the protocol has run with no token. Each protocol gets an eight-step farm plan with costs and times, in a static, sortable and filterable dashboard with a detail view.
+A token launch radar for a sealed DefiLlama snapshot. Every one of its 758 protocols is accounted for in exactly one group. The 198 that record no token are ranked by implied value = launch value × token odds:
 
-- `lib/model.ts`: the value model (peer table, growth and track-record factors) and the farm plans
-- `main.ts`: reads the snapshot, writes `board.json`, `data.js`, the dashboard, the screenshots and `dossier.json`
-- `dashboard/`: the page (no framework, no network); it re-derives each row's implied value from the row's inputs
+- Launch value is fitted on the snapshot's 119 traded tokens. Each candidate term (size, category, growth, age, family, chains) is kept only if it lowers the held-out error in both leave-one-out and walk-forward tests.
+- Token odds come from a logistic fit on 702 protocols, with its terms tested the same way (10-fold and walk-forward).
+
+Each row carries a farm verdict (FARM, THIN or SKIP) at a chosen deposit, netted against every fee and what a T-bill would pay, plus its break-even deposit and an eight-step plan with costs and times. A self-test that can fail blocks the build.
+
+- `dashboard/core-*.js`: the model (stats, fits, accounting, farm economics, self-test). It is one script that runs in both Node and the browser.
+- `main.ts`: runs that model on the snapshot and writes `board.json`, `data.js`, the dashboard, the screenshots and `dossier.json`.
+- `dashboard/app-*.js`: the page (no framework, no network). On load it refits the models and recomputes every row, and checks the result against `board.json`.
 
 ## Run it
 

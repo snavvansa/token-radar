@@ -1,23 +1,23 @@
-// Token Radar: token-radar-01 entry (Node 22.18+, standard library only).
+// Token Radar v2: token-radar-01 entry (Node 22.18+, standard library only).
 //
-// Reads the sealed snapshot (/input/snapshot.json, or --input <file|dir>), ranks every pre-token
-// protocol by the peer-multiple model in lib/model.ts, and writes into /output (or MAKEFUN_OUTPUT_DIR):
+// The model lives in dashboard/core-*.js, one script the page also runs: main.ts builds the board with
+// it and writes /output (or MAKEFUN_OUTPUT_DIR); the page builds it again from the same snapshot and
+// shows whether every row matches. Output is deterministic (no clock, no randomness).
 //   board.json    the ranked board the gate reads
-//   data.js       the same board plus peers, live tokens and the model's constants, for the page
-//   dashboard/    the static page (no network), copied from this repository
-//   screenshots/  three captures of that page
-//   dossier.json  written last by the vendored make.fun library, as the scorer rebuilds it
-// Output is deterministic: nothing depends on the clock, so two runs write the same bytes.
+//   data.js       the snapshot and the board, for the page to re-derive
+//   dashboard/    the page, screenshots/ its three captures, dossier.json written last
 //
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input ../token-radar-01-kit/input/snapshot.json
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MODEL, boardIssue, buildBoard, parseSnapshot } from './lib/model.ts';
 import { buildDossier } from './vendor/makefun-board.ts';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
+const require = createRequire(import.meta.url);
+const core = require('./dashboard/core-farm.js');
 
 function arg(name: string, fallback: string): string {
   const at = process.argv.indexOf(`--${name}`);
@@ -31,33 +31,21 @@ if (!existsSync(inputFile)) {
   process.exit(2);
 }
 const out = arg('output', process.env.MAKEFUN_OUTPUT_DIR ?? '/output');
+const snapshot = JSON.parse(readFileSync(inputFile, 'utf8'));
 
-const snapshot = parseSnapshot(readFileSync(inputFile, 'utf8'));
-const { rows, peers, market, live } = buildBoard(snapshot);
-const issue = boardIssue(rows, snapshot);
-if (issue !== null) {
-  process.stderr.write(`token radar: refusing to write a board the gate would refuse: ${issue}\n`);
+const result = core.build(snapshot);
+const failed = result.tests.filter((t: { ok: boolean }) => !t.ok);
+for (const t of result.tests) process.stdout.write(`self-test ${t.ok ? 'pass' : 'FAIL'} ${t.id}: ${t.detail}\n`);
+if (failed.length > 0) {
+  process.stderr.write(`token radar: ${failed.length} self-test check(s) failed; refusing to write an entry\n`);
   process.exit(1);
 }
 
 mkdirSync(out, { recursive: true });
-writeFileSync(join(out, 'board.json'), `${JSON.stringify({ model: MODEL.version, as_of: snapshot.as_of, rows })}\n`);
-
-// The page's data: compact rows (arrays keep data.js small), with the farm steps in full.
-const data = {
-  as_of: snapshot.as_of,
-  source: snapshot.source,
-  floor_usd: snapshot.floor_usd,
-  protocols: snapshot.protocols.length,
-  watchlist: snapshot.watchlist.length,
-  model: MODEL,
-  market_multiple: market,
-  peers,
-  live,
-  cols: ['rank', 'slug', 'name', 'category', 'chains', 'tvl_usd', 'change_7d', 'listed_at', 'age_days', 'on_watchlist', 'phase', 'implied_value_usd', 'peer_multiple', 'peers', 'growth_multiplier', 'age_multiplier', 'growth_input_pct', 'age_input_days', 'airdrop_per_1k_usd', 'plan_cost_usd', 'plan_days', 'farm_steps'],
-  rows: rows.map((r) => [r.rank, r.slug, r.name, r.category, r.chains, r.tvl_usd, r.change_7d, r.listed_at, r.age_days, r.on_watchlist, r.phase, r.implied_value_usd, r.model.peer_multiple, r.model.peers, r.model.growth_multiplier, r.model.age_multiplier, r.model.growth_input_pct, r.model.age_input_days, r.airdrop_per_1k_usd, r.plan_cost_usd, r.plan_days, r.farm_steps]),
-};
-writeFileSync(join(out, 'data.js'), `window.RADAR=${JSON.stringify(data)};\n`);
+writeFileSync(join(out, 'board.json'), `${JSON.stringify({ model: 'radar-v2', as_of: snapshot.as_of, value_terms: result.model.value_terms, odds_terms: result.model.odds_terms, rows: result.board })}\n`);
+const ledger: Record<string, number> = {};
+for (const [k, v] of Object.entries(result.ledger)) ledger[k] = (v as string[]).length;
+writeFileSync(join(out, 'data.js'), `window.RADAR_SNAPSHOT=${JSON.stringify(snapshot)};\nwindow.RADAR=${JSON.stringify({ board: result.board, ledger, model: result.model, tests: result.tests })};\n`);
 
 function copyFiles(from: string, to: string): string[] {
   if (!existsSync(from)) return [];
@@ -79,9 +67,5 @@ if (shots.length < 3 || shots.length > 4) {
   process.stderr.write(`token radar: screenshots/ holds ${shots.length} images; the gate wants 3 or 4\n`);
   process.exit(1);
 }
-
 writeFileSync(join(out, 'dossier.json'), buildDossier(out, { text_max_bytes: 65_536, screenshots: { max: 4, max_bytes: 524_288 }, dashboard: { max_files: 400, max_bytes: 4_194_304 } }));
-
-const early = rows.filter((r) => !r.on_watchlist).length;
-process.stdout.write(`token radar (${MODEL.version}): ${snapshot.protocols.length} protocols, ${rows.length} ranked (${snapshot.watchlist.length} watchlist + ${early} below the floor), ${live.length} live tokens as peers; market multiple ${market}x\n`);
-process.stdout.write(`token radar: wrote board.json, data.js, dashboard/ (${pageFiles.length} files), screenshots/ (${shots.length}) and dossier.json to ${out}\n`);
+process.stdout.write(`token radar v2: ${snapshot.protocols.length} protocols accounted, ${result.board.length} ranked; value terms [${result.model.value_terms}], odds terms [${result.model.odds_terms}]; wrote ${pageFiles.length} page files and ${shots.length} screenshots to ${out}\n`);
